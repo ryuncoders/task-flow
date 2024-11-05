@@ -12,3 +12,53 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id       Int     @id @default(autoincrement())
+  username String
+  email    String? @unique
+  password String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  Goal Goal[]
+}
+
+model Goal {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  period      Int
+
+  user    User       @relation(fields: [userId], references: [id])
+  Backlog WorkItem[]
+  userId  Int
+}
+
+model WorkItem {
+  id     Int    @id @default(autoincrement())
+  title  String
+  goal   Goal   @relation(fields: [goalId], references: [id])
+  goalId Int
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
+  Task Task[]
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  description String
+  isCompleted Boolean
+
+  workItem   WorkItem @relation(fields: [workItemId], references: [id])
+  workItemId Int
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+}
