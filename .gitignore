@@ -9,6 +9,8 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+*.db
+*.db-journal
 
 # testing
 /coverage
@@ -31,6 +33,7 @@ yarn-error.log*
 
 # env files (can opt-in for commiting if needed)
 .env*
+.env
 
 # vercel
 .vercel
