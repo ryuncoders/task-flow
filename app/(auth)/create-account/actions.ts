@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { getSession } from "@/lib/session/get";
 
 interface ICreateAccount {
   username: String;
@@ -28,8 +29,16 @@ export async function createAccountHandle(prevState: any, formData: FormData) {
     },
     select: {
       id: true,
+      username: true,
     },
   });
-  console.log(newUser);
+
+  const session = await getSession();
+  session.userId = newUser.id + "";
+  session.uesrname = newUser.username;
+  session.isLoggedIn = true;
+
+  await session.save();
+
   redirect("/");
 }
