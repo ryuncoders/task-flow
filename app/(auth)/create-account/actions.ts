@@ -40,5 +40,5 @@ export async function createAccountHandle(prevState: any, formData: FormData) {
 
   await session.save();
 
-  redirect("/");
+  redirect("/home");
 }
