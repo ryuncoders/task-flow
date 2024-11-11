@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.21.1",
+    "gantt-schedule-timeline-calendar": "^3.37.5",
     "iron-session": "^8.0.3",
     "next": "15.0.2",
     "prisma": "^5.21.1",
