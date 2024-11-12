@@ -46,19 +46,27 @@ model WorkItem {
 
   createdAt DateTime @default(now())
   updateAt  DateTime @updatedAt
-
-  Task Task[]
 }
 
-model Task {
-  id          Int      @id @default(autoincrement())
-  date        DateTime
-  description String
-  isCompleted Boolean
-
-  workItem   WorkItem @relation(fields: [workItemId], references: [id])
-  workItemId Int
+model TimeLine {
+  id        Int      @id @default(autoincrement())
+  title     String
+  startDate DateTime
+  endDate   DateTime
 
   createdAt DateTime @default(now())
   updateAt  DateTime @updatedAt
+  Task      Task[]
+}
+
+model Task {
+  id   Int      @id @default(autoincrement())
+  date DateTime
+  text String
+
+  timeLine TimeLine @relation(fields: [timeLineId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updateAt   DateTime @updatedAt
+  timeLineId Int
 }
