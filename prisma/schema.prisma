@@ -44,25 +44,30 @@ model WorkItem {
   goal   Goal   @relation(fields: [goalId], references: [id])
   goalId Int
 
-  createdAt DateTime @default(now())
-  updateAt  DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updateAt  DateTime   @updatedAt
+  TimeLine  TimeLine[]
 }
 
 model TimeLine {
   id        Int      @id @default(autoincrement())
   title     String
-  startDate DateTime
-  endDate   DateTime
+  dateStart DateTime
+  dateEnd   DateTime
+  workItem  WorkItem @relation(fields: [workItemId], references: [id])
+  Task      Task[]
 
   createdAt DateTime @default(now())
   updateAt  DateTime @updatedAt
-  Task      Task[]
+
+  workItemId Int
 }
 
 model Task {
-  id   Int      @id @default(autoincrement())
-  date DateTime
-  text String
+  id         Int      @id @default(autoincrement())
+  date       DateTime
+  text       String
+  isComplete String
 
   timeLine TimeLine @relation(fields: [timeLineId], references: [id])
 
