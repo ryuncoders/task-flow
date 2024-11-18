@@ -1,17 +1,15 @@
 "use client";
 
-import { ITimeLine, IWorkItem } from "@/app/api/data";
-import { TimeLineProvider } from "@/components/context/time-line";
 import { getWeeklyColors } from "@/lib/utils";
-import { isWithinInterval } from "date-fns";
-import React, { ReactNode, useEffect, useState } from "react";
+import { ITimeLine, IWorkItem } from "@/types/models";
+import React, { createContext, ReactNode, useEffect, useState } from "react";
 
 interface LayoutProps {
   children: ReactNode;
   params: { id: string };
 }
 
-const workItems: IWorkItem[] = [
+const test_workItems: IWorkItem[] = [
   {
     id: 1,
     title: "기출풀기",
@@ -105,13 +103,15 @@ const workItems: IWorkItem[] = [
 ];
 
 export default function GoalLayout({ children, params }: LayoutProps) {
-  const [workItem, setWorkItem] = useState<IWorkItem[]>(workItems);
-  const [newTimeLine, setNewTimeLIne] = useState<ITimeLine | null>(null);
+  const [workItems, setWorkItems] = useState<IWorkItem[]>(test_workItems);
+  const [newTimeLine, setNewTimeLine] = useState<ITimeLine | null>(null);
   const [defaultTimeLine, setDefaultTimeLine] = useState<string[][]>([]);
+
+  const ItemContext = createContext(null);
 
   useEffect(() => {
     // workItems에서 각 timeLine에 대해 getWeeklyColors를 사용하여 dateTimeLineColor를 설정
-    const updatedWorkItems = workItem.map((item) => ({
+    const updatedWorkItems = workItems.map((item) => ({
       ...item,
       timeLines: item.timeLines.map((timeLine) => ({
         ...timeLine,
@@ -122,8 +122,22 @@ export default function GoalLayout({ children, params }: LayoutProps) {
       })),
     }));
 
-    setWorkItem(updatedWorkItems); // 업데이트된 workItems 상태 설정
+    setWorkItems(updatedWorkItems); // 업데이트된 workItems 상태 설정
   }, []); // 컴포넌트 렌더링 후 한번 실행
 
-  return <TimeLineProvider>{children}</TimeLineProvider>;
+  return (
+    <ItemContext.Provider
+      //@ts-ignore
+      value={{
+        workItems,
+        setWorkItems,
+        newTimeLine,
+        setNewTimeLine,
+        defaultTimeLine,
+        setDefaultTimeLine,
+      }}
+    >
+      {children}
+    </ItemContext.Provider>
+  );
 }
