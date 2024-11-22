@@ -4,13 +4,14 @@ import GoalComponents from "@/components/goal-components";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getWorkItem, IWorkItem } from "@/app/api/data";
-import { addWorkItem } from "@/app/work-item/[id]/actions";
+import { addWorkItem } from "@/app/goal/[id]/actions";
 
 export default function WorkList({ workList }: { workList: IWorkItem[] }) {
   const params = useParams();
   // const workItems = await getWorkItem(+params.id!);
 
   const [workItem, setWorkItem] = useState<IWorkItem[]>(workList);
+
   // const [optimisticWorkItem, setOptimisticWorkItem] = useOptimistic(workItem, );
   const onSubmitHandle = async (event: any) => {
     event.preventDefault();

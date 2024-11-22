@@ -1,18 +1,12 @@
-import { getGoal, IGoal } from "@/app/api/data";
+import { getGoal } from "@/app/api/data";
 import GoalComponents from "./goal-components";
 import Link from "next/link";
-import { useOptimistic, useState } from "react";
 import { unstable_cache as nextCache } from "next/cache";
 
 const getGoalsCache = nextCache(getGoal, ["goal-list"], { tags: ["goals"] });
 
 export default async function GoalList() {
   const goals = await getGoalsCache();
-
-  // const [optimisticGoals, setOptimisticGoals] = useOptimistic(
-  //   goals,
-  //   (state, newGoals) => [...state, { newGoals }]
-  // );
 
   return (
     <div>
