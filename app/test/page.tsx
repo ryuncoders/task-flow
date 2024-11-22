@@ -1,5 +1,6 @@
 "use client";
 
+import { getWeekDateWithWeekdays } from "@/lib/utils";
 import { useState } from "react";
 
 const week = [
@@ -54,6 +55,10 @@ export default function DragColoring() {
     );
   };
 
+  const onClick = () => {
+    console.log("click button: hello world");
+  };
+
   return (
     <div
     // onMouseUp={handleMouseUp}
@@ -88,6 +93,21 @@ export default function DragColoring() {
         <div>taskDate: {taskDate}</div>
         <span>start Date: {week[Math.min(...taskDate)].day} / </span>
         <span>end Date: {week[Math.max(...taskDate)].day}</span>
+      </div>
+      <div>
+        <h1>test: grid</h1>
+        <div className="grid gap-2 grid-cols-[1fr_4fr]">
+          <div className="size-16 bg-blue-500 ">1</div>
+          <div className="size-16 bg-blue-500 ">2</div>
+          <div className="size-16 bg-blue-500 ">
+            <div className="">3</div>
+            <div className="">3-1</div>
+          </div>
+          <div className="size-16 bg-blue-500 relative">
+            <div className="size-16 bg-blue-300 absolute opacity-50">4-1</div>
+            <div className="size-16 bg-blue-300 absolute opacity-50">4-2</div>
+          </div>
+        </div>
       </div>
     </div>
   );
