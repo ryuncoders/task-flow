@@ -13,6 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Test {
+  id   Int    @id @default(autoincrement())
+  text String
+}
+
 model User {
   id       Int     @id @default(autoincrement())
   username String
@@ -33,7 +38,7 @@ model Goal {
   endDate     DateTime
   period      Int
 
-  user    User       @relation(fields: [userId], references: [id])
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   Backlog WorkItem[]
   userId  Int
 }
@@ -41,7 +46,7 @@ model Goal {
 model WorkItem {
   id     Int    @id @default(autoincrement())
   title  String
-  goal   Goal   @relation(fields: [goalId], references: [id])
+  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
   goalId Int
 
   createdAt DateTime   @default(now())
@@ -54,8 +59,9 @@ model TimeLine {
   title     String
   dateStart DateTime
   dateEnd   DateTime
-  workItem  WorkItem @relation(fields: [workItemId], references: [id])
+  workItem  WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
   Task      Task[]
+  color     String   @default("blue")
 
   createdAt DateTime @default(now())
   updateAt  DateTime @updatedAt
@@ -67,9 +73,9 @@ model Task {
   id         Int      @id @default(autoincrement())
   date       DateTime
   text       String
-  isComplete String
+  isComplete String   @default("incomplete")
 
-  timeLine TimeLine @relation(fields: [timeLineId], references: [id])
+  timeLine TimeLine @relation(fields: [timeLineId], references: [id], onDelete: Cascade)
 
   createdAt  DateTime @default(now())
   updateAt   DateTime @updatedAt
