@@ -1,39 +1,59 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useItemContext } from "@/contexts/item-context";
+import { getTimeLineDateWeekdays } from "@/lib/utils";
 
-const initialDetails = [
-  { date: "2024-11-21", text: "" },
-  { date: "2024-11-22", text: "" },
-  { date: "2024-11-23", text: "" },
-];
+interface IDetail {
+  year: string;
+  weekdays: string;
+  month: string;
+  day: string;
+  text: string;
+}
 
 export default function Task() {
-  // 해당하는 워크 아이템 가져오기
-  // const { workItems, setWorkItems } = useItemContext();
-
+  const { workItems } = useItemContext();
   const paramsSearch = useSearchParams();
   const paramsId = useParams().id;
-
   const router = useRouter();
 
+  const paramsData = {
+    workItemIndex: paramsSearch.get("workItemIndex"),
+    dateStart: paramsSearch.get("dateStart"),
+    dateEnd: paramsSearch.get("dateEnd"),
+  };
+
+  if (!paramsData) {
+    console.log("params에 값이 존재하지 않음.");
+    alert("잘못된 형태입니다. 다시 시도해주세요.");
+    router.back();
+  }
+  const timeLineDateWeekdays = getTimeLineDateWeekdays(
+    +paramsData.dateStart!,
+    +paramsData.dateEnd!
+  );
+
   const [title, setTitle] = useState("");
-  const [details, setDetails] =
-    useState<{ date: string; text: string }[]>(initialDetails);
+  const [details, setDetails] = useState<IDetail[]>([]);
   const [submittedData, setSubmittedData] = useState<any>(null);
+
+  const initialDetails = timeLineDateWeekdays.map((item) => {
+    return { ...item, text: "" };
+  });
+
+  useEffect(() => {
+    setDetails(initialDetails);
+  }, []);
 
   const changeTitle = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(event.target.value);
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const workItemId = paramsSearch.get("work_item_idx");
-
-    const data = {};
-
-    console.log(data);
+    const workItemId = workItems[+paramsData.workItemIndex!].id;
 
     try {
       const response = await fetch("/api/task/create", {
@@ -41,7 +61,11 @@ export default function Task() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ workItemId, title, details }),
+        body: JSON.stringify({
+          workItemId,
+          title,
+          details,
+        }),
       });
 
       const result = await response.json();
@@ -65,16 +89,22 @@ export default function Task() {
     setTitle("");
     setDetails(initialDetails);
     setSubmittedData(null);
+    router.back();
   };
+
   const changeDetail = (index: number, text: string) => {
     setDetails((prev) =>
       prev.map((detail, idx) => (idx === index ? { ...detail, text } : detail))
     );
   };
+
   return (
     <div className="p-5">
       <h1>Task</h1>
-      <h2>workItem: {paramsSearch.get("work_item_idx")}</h2>
+      <Suspense fallback={"hello world"}>
+        <h2>workItem: {workItems[+paramsData.workItemIndex!].title}</h2>
+      </Suspense>
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
         <div className="gap-1 flex justify-end">
           <button className="rounded-md bg-blue-600 px-2 py-1" type="submit">
@@ -102,9 +132,11 @@ export default function Task() {
           />
         </div>
         <div className="border flex gap-3 flex-col p-3">
-          {details.map((detail: any, index: number) => (
+          {details.map((detail: IDetail, index: number) => (
             <div className="flex flex-col" key={index}>
-              <span>{detail.date}</span>
+              <span>
+                {detail.month}-{detail.day}
+              </span>
               <input
                 type="text"
                 placeholder="task detail"

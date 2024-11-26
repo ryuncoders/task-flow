@@ -6,17 +6,16 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { workItemId, title, details } = body;
 
-    const dateStart = details[0].date;
-    const dateEnd = details[details.length - 1].date;
+    const lastDetail = details[details.length - 1];
+    const dateStart = `${details[0].year}-${details[0].month}-${details[0].day}`;
+    const dateEnd = `${lastDetail.year}-${lastDetail.month}-${lastDetail.day}`;
 
-    // data를 예시로 만들어 둔걸 사용하고 있기 때문에
-    // 나중에 바꿔줘야함.
-
-    const work_ItemId = 3;
+    // (test) 가짜 데이터로 작업중 workItemId 나중에 바꿔주기
+    console.log(workItemId, title, details);
 
     const findData = await prisma.workItem.findUnique({
       where: {
-        id: work_ItemId, // (테스트중)workItemId로 변경 예정
+        id: 3,
       },
       select: {
         id: true,
@@ -54,13 +53,15 @@ export async function POST(request: Request) {
       console.log("ok!");
     }
 
-    const newTask = details.map((detail: { date: string; text: string }) => {
-      return {
-        text: detail.text,
-        date: new Date(detail.date),
-        timeLineId: newTimeLine.id,
-      };
-    });
+    const newTask = details.map(
+      (detail: { year: string; month: string; day: string; text: string }) => {
+        return {
+          text: detail.text,
+          date: new Date(`${detail.year}-${detail.month}-${detail.day}`),
+          timeLineId: newTimeLine.id,
+        };
+      }
+    );
 
     const newTasks = await prisma.task.createManyAndReturn({
       data: newTask,

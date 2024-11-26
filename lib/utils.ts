@@ -9,14 +9,28 @@ export function getWeekDateWithWeekdays() {
   for (let i = 0; i < 7; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() + mondayOffset + i);
-    const [weekdays, month, day, ...time] = date.toString().split(" ");
+
+    const [weekdays, month, day, year, ...time] = date.toString().split(" ");
     weekDates.push({
+      year,
       weekdays,
       month,
       day,
     });
   }
   return weekDates;
+}
+
+export function getTimeLineDateWeekdays(
+  dateStartIndex: number,
+  dateEndIndex: number
+) {
+  const weekdays = getWeekDateWithWeekdays();
+  const timeLineDate = [];
+  for (var i = dateStartIndex; i <= dateEndIndex; i++) {
+    timeLineDate.push(weekdays[i]);
+  }
+  return timeLineDate;
 }
 
 export function getWeeklyColors(timeLine: {

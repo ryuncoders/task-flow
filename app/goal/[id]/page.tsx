@@ -3,8 +3,9 @@
 import { useItemContext } from "@/contexts/item-context";
 import { getWeekDateWithWeekdays, getWeeklyColors } from "@/lib/utils";
 import { IWorkItem } from "@/types/models";
+import { useParams, useRouter } from "next/navigation";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const test_workItems: IWorkItem[] = [
   {
@@ -111,35 +112,104 @@ const test_workItems: IWorkItem[] = [
   },
 ];
 
-export default function WorkItem() {
+const paintColor = "blue";
+
+const defaultTimeLine = [
+  ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
+  ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
+];
+
+export default function GoalPage() {
   const { workItems, setWorkItems } = useItemContext();
+  const [gridTimeLine, setGridTimeLine] = useState<string[][]>(defaultTimeLine);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const params = useParams();
 
   useEffect(() => {
-    // workItems에서 각 timeLine에 대해 getWeeklyColors를 사용하여 dateTimeLineColor를 설정
-    const updatedWorkItems = workItems.map((item) => ({
-      ...item,
-      timeLines: item.timeLines.map((timeLine) => ({
-        ...timeLine,
-        dateTimeLineColor: getWeeklyColors({
-          dateRange: timeLine.dateRange,
-          color: timeLine.color,
-        }),
-      })),
-    }));
-    setWorkItems(updatedWorkItems); // 업데이트된 workItems 상태 설정
+    const fetchWorkItem = async () => {
+      try {
+        const goalId = params.id;
+        const response = await fetch(`/api/workItem?goalId=${goalId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).then((res) => res.json());
+
+        if (response.success) {
+          return response.workItems;
+        } else {
+          console.log("응답 받지 못함.", response.error);
+        }
+      } catch (error) {
+        console.log(error);
+        setErrorMessage("잘못된 goal 입니다.");
+      }
+    };
+    const data = fetchWorkItem();
+    setWorkItems(test_workItems);
   }, []); // 컴포넌트 렌더링 후 한번 실행
 
-  setWorkItems(test_workItems);
   const weekDateWidthWeekdays = getWeekDateWithWeekdays();
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [newTimeLineIndexAndDate, setNewTimeLineIndexAndDate] = useState([
+    0, 0, 0,
+  ]);
+
+  const handleMouseDown = (event: any, index: number, color_index: number) => {
+    event.preventDefault();
+    setIsDragging(true);
+    paintDiv(index, color_index);
+    setNewTimeLineIndexAndDate((prev) => [index, color_index, prev[2]]);
+  };
+  const handleMouseEnter = (index: number, color_index: number) => {
+    if (isDragging) {
+      paintDiv(index, color_index);
+      setNewTimeLineIndexAndDate((prev) => [prev[0], prev[1], color_index]);
+    }
+  };
+
+  const router = useRouter();
+  const handleMouseUp = (index: number, color_index: number) => {
+    setIsDragging(false);
+
+    const workItemIndex = newTimeLineIndexAndDate[0];
+    const dateStart = newTimeLineIndexAndDate[1];
+    const dateEnd = newTimeLineIndexAndDate[2];
+
+    console.log(dateStart, dateEnd);
+
+    router.push(
+      `/goal/${params.id}/task/add?workItemIndex=${workItemIndex}&dateStart=${dateStart}&dateEnd=${dateEnd}`
+    );
+  };
+
+  const paintDiv = (index: number, color_index: number) => {
+    setGridTimeLine((prevTimeLine) => {
+      return prevTimeLine.map((timeLine, idx) => {
+        if (idx === index) {
+          // 현재 index의 색상 배열만 업데이트
+          const newTimeLine = timeLine.map((color, i) =>
+            i === color_index ? paintColor : color
+          );
+          return newTimeLine;
+        }
+        // 나머지 타임라인은 그대로 유지
+        return timeLine;
+      });
+    });
+  };
 
   return (
     <div className="flex gap-0.5 flex-col mt-10 pl-5">
       {/* form */}
-      <div className="flex">
-        <div className="w-[200px]" />
+      <div className="grid grid-cols-[2fr_7fr]">
+        <div className="" />
         <div className="flex  ">
-          {weekDateWidthWeekdays.map((date) => (
-            <div className="w-20 flex flex-col text-center ">
+          {weekDateWidthWeekdays.map((date, index) => (
+            <div className="w-20 flex flex-col text-center " key={index}>
               <span className="font-bold">{date.day}</span>
               <span className="text-xs">{date.weekdays}</span>
             </div>
@@ -148,14 +218,15 @@ export default function WorkItem() {
       </div>
 
       {workItems.map((workItem) => (
-        <div key={workItem.id} className="flex">
-          <h1 className=" w-[200px] h-[40px]  ">{workItem.title} </h1>
+        <div key={workItem.id} className="grid grid-cols-[2fr_7fr]">
+          <h1 className="h-[40px]  ">{workItem.title}</h1>
           <div className="relative ">
             {workItem.timeLines.map((timeLine, idx) => (
-              <div className=" flex  absolute ">
+              <div className=" flex  absolute   top-0" key={idx}>
                 {/* dateTimeLineColor가 null이면 안됨 */}
-                {timeLine.dateTimeLineColor!.map((c) => (
+                {timeLine.dateTimeLineColor!.map((c, color_idx) => (
                   <div
+                    key={color_idx}
                     className="h-[40px] w-20 border border-black"
                     style={{
                       backgroundColor: c,
@@ -164,6 +235,27 @@ export default function WorkItem() {
                   />
                 ))}
               </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {gridTimeLine.map((line, index) => (
+        <div className="grid grid-cols-[2fr_7fr]" key={index}>
+          <div />
+          <div
+            // onMouseLeave={handleMouseUp(index, color_index)}
+            className="flex"
+          >
+            {[...line].map((color, color_index) => (
+              <div
+                key={color_index}
+                className="border w-20 h-[40px]"
+                style={{ backgroundColor: color }}
+                onMouseUp={() => handleMouseUp(index, color_index)}
+                onMouseDown={(e) => handleMouseDown(e, index, color_index)}
+                onMouseEnter={() => handleMouseEnter(index, color_index)}
+              />
             ))}
           </div>
         </div>
