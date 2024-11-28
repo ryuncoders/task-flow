@@ -25,9 +25,10 @@ export interface ITimeLine {
   id: number;
   title: string; // TimeLine 제목 (예: "1단원")
   tasks: ITask[]; // 관련 Task 목록
-  dateRange: [string, string]; // 시작 및 종료 날짜 ["YYYY-MM-DD", "YYYY-MM-DD"]
   color: string;
-  dateTimeLineColor: string[] | null;
+  dateStart?: Date;
+  dateEnd?: Date;
+  dateTimeLineColor?: string[] | null;
 }
 
 export interface IWorkItem {

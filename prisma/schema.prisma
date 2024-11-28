@@ -27,7 +27,7 @@ model User {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  Goal Goal[]
+  goals Goal[]
 }
 
 model Goal {
@@ -38,9 +38,9 @@ model Goal {
   endDate     DateTime
   period      Int
 
-  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Backlog WorkItem[]
-  userId  Int
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workItems WorkItem[]
+  userId    Int
 }
 
 model WorkItem {
@@ -51,7 +51,7 @@ model WorkItem {
 
   createdAt DateTime   @default(now())
   updateAt  DateTime   @updatedAt
-  TimeLine  TimeLine[]
+  timeLines TimeLine[]
 }
 
 model TimeLine {
@@ -60,7 +60,7 @@ model TimeLine {
   dateStart DateTime
   dateEnd   DateTime
   workItem  WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
-  Task      Task[]
+  tasks     Task[]
   color     String   @default("blue")
 
   createdAt DateTime @default(now())

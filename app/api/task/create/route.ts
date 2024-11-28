@@ -10,12 +10,9 @@ export async function POST(request: Request) {
     const dateStart = `${details[0].year}-${details[0].month}-${details[0].day}`;
     const dateEnd = `${lastDetail.year}-${lastDetail.month}-${lastDetail.day}`;
 
-    // (test) 가짜 데이터로 작업중 workItemId 나중에 바꿔주기
-    console.log(workItemId, title, details);
-
     const findData = await prisma.workItem.findUnique({
       where: {
-        id: 3,
+        id: workItemId,
       },
       select: {
         id: true,
@@ -81,7 +78,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      newTask: "hi",
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Something went wrong" });

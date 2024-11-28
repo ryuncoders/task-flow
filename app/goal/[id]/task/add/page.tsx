@@ -72,9 +72,6 @@ export default function Task() {
       if (result.success) {
         setTitle("");
         setDetails(initialDetails);
-
-        console.log("complete!", result.newTask);
-
         router.push(`/goal/${paramsId}`);
       } else {
         console.log("응답 받지 못함", result.error);
