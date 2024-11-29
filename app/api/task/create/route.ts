@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { workItemId, title, details } = body;
+    const { workItemId, title, details, color } = body;
 
     const lastDetail = details[details.length - 1];
     const dateStart = `${details[0].year}-${details[0].month}-${details[0].day}`;
@@ -35,6 +35,7 @@ export async function POST(request: Request) {
         title,
         dateStart: new Date(dateStart),
         dateEnd: new Date(dateEnd),
+        color: `#${color}`,
       },
       select: {
         id: true,
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      timeLineId: newTimeLine.id,
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Something went wrong" });

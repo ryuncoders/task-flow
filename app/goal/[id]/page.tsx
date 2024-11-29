@@ -1,24 +1,30 @@
 "use client";
 
 import { useItemContext } from "@/contexts/item-context";
-import {
-  convertToRGBA,
-  getWeekDateWithWeekdays,
-  getWeeklyColors,
-} from "@/lib/utils";
+import { getWeekDateWithWeekdays } from "@/lib/utils";
 import { IWorkItem } from "@/types/models";
 import { useParams, useRouter } from "next/navigation";
 
 import { useEffect, useState } from "react";
 
-const paintColor = "black";
-
 const defaultTimeLine = Array.from(Array(3), () => Array(7).fill("#ffffff"));
+const colorPattle = [
+  "#7f8c8d",
+  "#16a085",
+  "#27ae60",
+  "#2980b9",
+  "#8e44ad",
+  "#2c3e50",
+  "#f39c12",
+  "#d35400",
+  "#c0392b",
+];
 
 export default function GoalPage() {
   const { workItems, setWorkItems } = useItemContext();
   const [gridTimeLine, setGridTimeLine] = useState<string[][]>(defaultTimeLine);
-  const [errorMessage, setErrorMessage] = useState("");
+
+  const [colorSelect, setColorSelect] = useState(colorPattle[0]);
 
   const params = useParams();
 
@@ -40,7 +46,7 @@ export default function GoalPage() {
         }
       } catch (error) {
         console.log(error);
-        setErrorMessage("잘못된 goal 입니다.");
+        alert("잘못된 경로 입니다. 해당하는 goal 목표가 없습니다.");
       }
     };
     fetchWorkItem();
@@ -75,7 +81,7 @@ export default function GoalPage() {
   };
 
   const router = useRouter();
-  const handleMouseUp = (index: number, color_index: number) => {
+  const handleMouseUp = () => {
     setIsDragging(false);
 
     const [workItemIndex, ...date] = newTimeLineIndexAndDate;
@@ -84,7 +90,11 @@ export default function GoalPage() {
     const dateEnd = Math.max(...date);
 
     router.push(
-      `/goal/${params.id}/task/add?workItemIndex=${workItemIndex}&dateStart=${dateStart}&dateEnd=${dateEnd}`
+      `/goal/${
+        params.id
+      }/task/add?workItemIndex=${workItemIndex}&dateStart=${dateStart}&dateEnd=${dateEnd}&color=${colorSelect.slice(
+        1
+      )}`
     );
   };
 
@@ -94,7 +104,7 @@ export default function GoalPage() {
         if (idx === index) {
           // 현재 index의 색상 배열만 업데이트
           const newTimeLine = timeLine.map((color, i) =>
-            i === color_index ? paintColor : color
+            i === color_index ? colorSelect : color
           );
           return newTimeLine;
         }
@@ -107,6 +117,16 @@ export default function GoalPage() {
   return (
     <div className="flex gap-0.5 flex-col mt-10 pl-5">
       {/* form */}
+      <div className="flex gap-1">
+        {colorPattle.map((color) => (
+          <div
+            key={color}
+            className="size-4 rounded-full cursor-pointer"
+            style={{ backgroundColor: color }}
+            onClick={() => setColorSelect(color)}
+          />
+        ))}
+      </div>
       <div className="grid grid-cols-[2fr_7fr]">
         <div className="" />
         <div className="flex  ">
@@ -124,23 +144,7 @@ export default function GoalPage() {
           <h1 className="h-[40px]  ">{workItem.title}</h1>
           <div className="relative ">
             {/* gridTimeLine */}
-            <div className="absoulte flex top-0 left-0">
-              {gridTimeLine[workItem_index].map((color, index) => (
-                <div className="border border-black h-[40px] w-20 " key={index}>
-                  <div
-                    className="opacity-50 w-[100%] h-[100%] z-10"
-                    style={{
-                      backgroundColor: color,
-                    }}
-                    onMouseUp={() => handleMouseUp(workItem_index, index)}
-                    onMouseDown={(e) =>
-                      handleMouseDown(e, workItem_index, index)
-                    }
-                    onMouseEnter={() => handleMouseEnter(workItem_index, index)}
-                  />
-                </div>
-              ))}
-            </div>
+
             {workItem.timeLines.map((timeLine, index) => (
               <div className=" flex  absolute   top-0 left-0" key={index}>
                 {/* dateTimeLineColor가 null이면 안됨 */}
@@ -156,6 +160,23 @@ export default function GoalPage() {
                 ))}
               </div>
             ))}
+            <div className="absoulte flex top-0 left-0">
+              {gridTimeLine[workItem_index].map((color, index) => (
+                <div className="border border-black h-[40px] w-20 " key={index}>
+                  <div
+                    className="opacity-50 w-[100%] h-[100%] z-10"
+                    style={{
+                      backgroundColor: color,
+                    }}
+                    onMouseUp={() => handleMouseUp()}
+                    onMouseDown={(e) =>
+                      handleMouseDown(e, workItem_index, index)
+                    }
+                    onMouseEnter={() => handleMouseEnter(workItem_index, index)}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ))}

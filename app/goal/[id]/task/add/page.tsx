@@ -3,7 +3,8 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useState } from "react";
 import { useItemContext } from "@/contexts/item-context";
-import { getTimeLineDateWeekdays } from "@/lib/utils";
+import { getTimeLineDateWeekdays, getWeeklyColors } from "@/lib/utils";
+import { ITask, ITimeLine } from "@/types/models";
 
 interface IDetail {
   year: string;
@@ -14,7 +15,7 @@ interface IDetail {
 }
 
 export default function Task() {
-  const { workItems } = useItemContext();
+  const { workItems, setWorkItems } = useItemContext();
   const paramsSearch = useSearchParams();
   const paramsId = useParams().id;
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function Task() {
     workItemIndex: paramsSearch.get("workItemIndex"),
     dateStart: paramsSearch.get("dateStart"),
     dateEnd: paramsSearch.get("dateEnd"),
+    color: paramsSearch.get("color"),
   };
 
   if (!paramsData) {
@@ -37,7 +39,6 @@ export default function Task() {
 
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState<IDetail[]>([]);
-  const [submittedData, setSubmittedData] = useState<any>(null);
 
   const initialDetails = timeLineDateWeekdays.map((item) => {
     return { ...item, text: "" };
@@ -65,13 +66,49 @@ export default function Task() {
           workItemId,
           title,
           details,
+          color: paramsData.color,
         }),
       });
 
-      const result = await response.json();
+      const result: { success: boolean; timeLineId?: number; error?: string } =
+        await response.json();
+      const lastInitialDetails = initialDetails.length - 1;
+
+      const dateStart = `${initialDetails[0].year}-${initialDetails[0].month}-${initialDetails[0].day}`;
+      const dateEnd = `${initialDetails[lastInitialDetails].year}-${initialDetails[lastInitialDetails].month}-${initialDetails[lastInitialDetails].day}`;
+
       if (result.success) {
         setTitle("");
         setDetails(initialDetails);
+        const newTasks: ITask[] = details.map((detail, index) => ({
+          id: index,
+          text: detail.text,
+          complete: "incomplete",
+          date: `${detail.year}-${detail.month}-${detail.day}`,
+        }));
+        const newTimeLine: ITimeLine = {
+          id: result.timeLineId!,
+          title,
+          dateStart: new Date(dateStart),
+          dateEnd: new Date(dateEnd),
+          tasks: newTasks,
+          color: paramsData.color || "#000000",
+          dateTimeLineColor: getWeeklyColors({
+            dateRange: [dateStart, dateEnd],
+            color: paramsData.color ? `#${paramsData.color}` : "#000000", // 기본 색상
+          }),
+        };
+        setWorkItems((prevWorkItems) =>
+          prevWorkItems.map((workItem, index) =>
+            index === Number(paramsData.workItemIndex)
+              ? {
+                  ...workItem,
+                  timeLines: [...workItem.timeLines, newTimeLine],
+                }
+              : workItem
+          )
+        );
+
         router.push(`/goal/${paramsId}`);
       } else {
         console.log("응답 받지 못함", result.error);
@@ -85,7 +122,6 @@ export default function Task() {
     e.preventDefault();
     setTitle("");
     setDetails(initialDetails);
-    setSubmittedData(null);
     router.back();
   };
 
