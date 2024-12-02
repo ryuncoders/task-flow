@@ -1,44 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Test() {
-  const [responseMessage, setResponseMessage] = useState("");
-  const handleButtonClick = async () => {
-    console.log("click button: hello world");
-    const message = "hello world";
-
-    try {
-      const response = await fetch("/api/test", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setResponseMessage(result.echo);
-      } else {
-        console.log("응답 받지 못함.", result.error);
-      }
-    } catch (error) {
-      console.log("응답 못 보냄.", error);
-    }
+  const router = useRouter();
+  const handleButtonClick = () => {
+    router.push("/test/profile");
   };
-
   return (
-    <div className="m-5 flex flex-col gap-3">
-      <h1>Simple Api Example</h1>
+    <div className="flex flex-col gap-2 p-5">
+      <h1>Test page</h1>
       <button
+        className="bg-blue-600 text-white p-3 rounded-full"
         onClick={handleButtonClick}
-        className="bg-blue-600 rounded-full p-3 text-white"
       >
-        Send Message
+        profile
       </button>
-      {responseMessage && <p>Response: {responseMessage}</p>}
     </div>
   );
 }

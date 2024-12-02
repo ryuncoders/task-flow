@@ -14,7 +14,6 @@ export async function POST(req: Request) {
         id: true,
       },
     });
-    console.log(data.id);
 
     if (!message) {
       return NextResponse.json({
