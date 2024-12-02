@@ -1,9 +1,17 @@
 import { ItemProvider } from "@/contexts/item-context";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+interface ILayout {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}
+
+export default function Layout({ children, modal }: ILayout) {
   return (
     <ItemProvider>
-      <div>{children}</div>
+      <div className="relative">
+        <main>{children}</main>
+        {modal}
+      </div>
     </ItemProvider>
   );
 }

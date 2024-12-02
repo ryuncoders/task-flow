@@ -36,3 +36,11 @@ export interface IWorkItem {
   title: string; // WorkItem 제목 (예: "기출풀기")
   timeLines: ITimeLine[]; // 관련 TimeLine 목록
 }
+
+export interface IDetail {
+  year: string;
+  weekdays: string;
+  month: string;
+  day: string;
+  text: string;
+}

@@ -1,16 +1,29 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  redirect,
+  useParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { useItemContext } from "@/contexts/item-context";
 import { getTimeLineDateWeekdays, getWeeklyColors } from "@/lib/utils";
 import { IDetail, ITask, ITimeLine } from "@/types/models";
 
-export default function Task() {
-  const { workItems, setWorkItems } = useItemContext();
+export default function AddTaskModal() {
+  const { workItems, setWorkItems, setGridTimeLine } = useItemContext();
   const paramsSearch = useSearchParams();
   const paramsId = useParams().id;
   const router = useRouter();
+
+  const closeModal = () => {
+    const re = Array.from(Array(workItems.length), () =>
+      Array(7).fill("#ffffff")
+    );
+    setGridTimeLine(re);
+    router.back(); // 모달 닫기 시 이전 URL로 이동
+  };
 
   const paramsData = {
     title: paramsSearch.get("title"),
@@ -43,6 +56,12 @@ export default function Task() {
 
   const changeTitle = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(event.target.value);
+  };
+
+  const changeDetail = (index: number, text: string) => {
+    setDetails((prev) =>
+      prev.map((detail, idx) => (idx === index ? { ...detail, text } : detail))
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,7 +121,7 @@ export default function Task() {
           )
         );
 
-        router.push(`/goal/${paramsId}`);
+        router.back();
       } else {
         console.log("응답 받지 못함", result.error);
       }
@@ -111,66 +130,52 @@ export default function Task() {
     }
   };
 
-  const handleCancel = (e: React.FormEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setTitle("");
-    setDetails(initialDetails);
-    router.back();
-  };
-
-  const changeDetail = (index: number, text: string) => {
-    setDetails((prev) =>
-      prev.map((detail, idx) => (idx === index ? { ...detail, text } : detail))
-    );
-  };
-
   return (
-    <div className="p-5">
-      <h1>Task</h1>
-      <h2>workItem: {paramsData.title}</h2>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <div className="gap-1 flex justify-end">
-          <button className="rounded-md bg-blue-600 px-2 py-1" type="submit">
-            확인
-          </button>
-          <button
-            onClick={handleCancel}
-            className=" rounded-md bg-blue-600 px-2 py-1"
-            type="button"
-          >
-            취소
-          </button>
-        </div>
-        <div>
-          <label htmlFor="title" className="pr-2">
-            title
-          </label>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white p-6 rounded-lg shadow-md max-w-md w-full">
+        <h2 className="text-lg font-bold">Add Task: {paramsData.title}</h2>
+        {/* Task Form */}
+        <form onSubmit={handleSubmit}>
+          <label htmlFor="title">title</label>
           <input
+            type="text"
             id="title"
             name="title"
-            type="text"
-            value={title}
             onChange={changeTitle}
             placeholder="write the title"
           />
-        </div>
-        <div className="border flex gap-3 flex-col p-3">
-          {details.map((detail: IDetail, index: number) => (
-            <div className="flex flex-col" key={index}>
-              <span>
-                {detail.month}-{detail.day}
-              </span>
-              <input
-                type="text"
-                placeholder="task detail"
-                value={detail.text}
-                onChange={(e) => changeDetail(index, e.target.value)}
-              />
-            </div>
-          ))}
-        </div>
-      </form>
+          <div className="border flex gap-3 flex-col p-3">
+            {details.map((detail: IDetail, index: number) => (
+              <div className="flex flex-col" key={index}>
+                <span>
+                  {detail.month}-{detail.day}
+                </span>
+                <input
+                  type="text"
+                  placeholder="task detail"
+                  value={detail.text}
+                  onChange={(e) => changeDetail(index, e.target.value)}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-4 py-2 bg-gray-300 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded"
+            >
+              Add
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

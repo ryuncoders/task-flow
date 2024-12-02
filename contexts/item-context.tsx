@@ -6,32 +6,28 @@ import { createContext, ReactNode, useContext, useState } from "react";
 interface ItemContextProps {
   workItems: IWorkItem[];
   setWorkItems: React.Dispatch<React.SetStateAction<IWorkItem[]>>;
-  newTimeLine: ITimeLine | null;
-  setNewTimeLine: React.Dispatch<React.SetStateAction<ITimeLine | null>>;
-  defaultTimeLine: string[][];
-  setDefaultTimeLine: React.Dispatch<React.SetStateAction<string[][]>>;
+  gridTimeLine: string[][];
+  setGridTimeLine: React.Dispatch<React.SetStateAction<string[][]>>;
 }
 
 interface ItemProviderProps {
   children: ReactNode;
 }
 
+const defaultTimeLine = Array.from(Array(3), () => Array(7).fill("#ffffff"));
 const ItemContext = createContext<ItemContextProps | undefined>(undefined);
 
 export const ItemProvider = ({ children }: ItemProviderProps) => {
   const [workItems, setWorkItems] = useState<IWorkItem[]>([]);
-  const [newTimeLine, setNewTimeLine] = useState<ITimeLine | null>(null);
-  const [defaultTimeLine, setDefaultTimeLine] = useState<string[][]>([]);
+  const [gridTimeLine, setGridTimeLine] = useState<string[][]>(defaultTimeLine);
 
   return (
     <ItemContext.Provider
       value={{
         workItems,
         setWorkItems,
-        newTimeLine,
-        setNewTimeLine,
-        defaultTimeLine,
-        setDefaultTimeLine,
+        gridTimeLine,
+        setGridTimeLine,
       }}
     >
       {children}

@@ -7,7 +7,6 @@ import { useParams, useRouter } from "next/navigation";
 
 import { useEffect, useState } from "react";
 
-const defaultTimeLine = Array.from(Array(3), () => Array(7).fill("#ffffff"));
 const colorPattle = [
   "#7f8c8d",
   "#16a085",
@@ -21,8 +20,8 @@ const colorPattle = [
 ];
 
 export default function GoalPage() {
-  const { workItems, setWorkItems } = useItemContext();
-  const [gridTimeLine, setGridTimeLine] = useState<string[][]>(defaultTimeLine);
+  const { workItems, setWorkItems, gridTimeLine, setGridTimeLine } =
+    useItemContext();
 
   const [colorSelect, setColorSelect] = useState(colorPattle[0]);
 
@@ -71,7 +70,7 @@ export default function GoalPage() {
     event.preventDefault();
     setIsDragging(true);
     paintDiv(index, color_index);
-    setNewTimeLineIndexAndDate((prev) => [index, color_index, color_index]);
+    setNewTimeLineIndexAndDate(() => [index, color_index, color_index]);
   };
   const handleMouseEnter = (index: number, color_index: number) => {
     if (isDragging) {
@@ -90,9 +89,9 @@ export default function GoalPage() {
     const dateEnd = Math.max(...date);
 
     router.push(
-      `/goal/${
-        params.id
-      }/task/add?workItemIndex=${workItemIndex}&dateStart=${dateStart}&dateEnd=${dateEnd}&color=${colorSelect.slice(
+      `/goal/${params.id}/task/add?title=${
+        workItems[workItemIndex].title
+      }&workItemIndex=${workItemIndex}&dateStart=${dateStart}&dateEnd=${dateEnd}&color=${colorSelect.slice(
         1
       )}`
     );
