@@ -4,7 +4,7 @@ import GoalComponents from "@/components/goal-components";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getWorkItem, IWorkItem } from "@/app/api/data";
-import { addWorkItem } from "@/app/goal/[id]/actions";
+import { addWorkItem } from "@/app/(tabs)/goal/[id]/actions";
 
 export default function WorkList({ workList }: { workList: IWorkItem[] }) {
   const params = useParams();

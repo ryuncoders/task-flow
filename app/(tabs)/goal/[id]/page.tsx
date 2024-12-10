@@ -2,10 +2,9 @@
 
 import { useItemContext } from "@/contexts/item-context";
 import { getWeekDateWithWeekdays } from "@/lib/utils";
-import { IWorkItem } from "@/types/models";
 import { useParams, useRouter } from "next/navigation";
 
-import { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 
 const colorPattle = [
   "#7f8c8d",
@@ -49,6 +48,11 @@ export default function GoalPage() {
       }
     };
     fetchWorkItem();
+    if (workItems.length > 0) {
+      setGridTimeLine(
+        Array.from(Array(workItems.length), () => Array(7).fill("#ffffff"))
+      );
+    }
   }, [params.id]); // 컴포넌트 렌더링 후 한번 실행
 
   useEffect(() => {
@@ -113,9 +117,60 @@ export default function GoalPage() {
     });
   };
 
+  const [workItemTitle, setWorkItemTitle] = useState("");
+
+  const handleWorkItemChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setWorkItemTitle(event.target.value);
+  };
+
+  const handleWorkItemSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      const response = await fetch(`/api/workItem`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: workItemTitle,
+          goalId: params.id,
+        }),
+      }).then((res) => res.json());
+
+      if (response.success) {
+        const newWorkItem = {
+          id: response.workItemId,
+          title: workItemTitle,
+          timeLines: [],
+        };
+        setWorkItems((prev) => [...prev, newWorkItem]);
+      } else {
+        console.log(response.error);
+      }
+    } catch (error) {
+      console.log("응답오류", error);
+    }
+    setWorkItemTitle("");
+  };
+
   return (
     <div className="flex gap-0.5 flex-col mt-10 pl-5">
-      {/* form */}
+      <div>
+        <form onSubmit={handleWorkItemSubmit}>
+          <input
+            onChange={handleWorkItemChange}
+            value={workItemTitle}
+            type="text"
+            placeholder="write the work todo..."
+          />
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-2 py-1 rounded-lg"
+          >
+            submit
+          </button>
+        </form>
+      </div>
       <div className="flex gap-1">
         {colorPattle.map((color) => (
           <div
@@ -159,8 +214,9 @@ export default function GoalPage() {
                 ))}
               </div>
             ))}
+
             <div className="absoulte flex top-0 left-0">
-              {gridTimeLine[workItem_index].map((color, index) => (
+              {gridTimeLine?.[workItem_index]?.map((color, index) => (
                 <div className="border border-black h-[40px] w-20 " key={index}>
                   <div
                     className="opacity-50 w-[100%] h-[100%] z-10"

@@ -1,28 +1,10 @@
-import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { message } = body;
+export async function GET(request: Request) {
+  return NextResponse.json({ message: "GET 요청 성공!" });
+}
 
-    const data = await prisma.test.create({
-      data: {
-        text: message,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!message) {
-      return NextResponse.json({
-        success: false,
-        error: "No message provided",
-      });
-    }
-    return NextResponse.json({ success: true, echo: message });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "Something went wrong" });
-  }
+export async function POST(request: Request) {
+  const body = await request.json(); // POST 데이터 파싱
+  return NextResponse.json({ message: "POST 요청 성공!", data: body });
 }

@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
 import { getWeeklyColors } from "@/lib/utils";
-import { IWorkItem } from "@/types/models";
 import { NextResponse } from "next/server";
 
 interface ReturnWorkItem {
@@ -100,5 +99,54 @@ export async function GET(request: Request): Promise<NextResponse> {
       success: false,
       error: "서버 오류 발생",
     } as ReturnWorkItem);
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { title, goalId } = body;
+    const findData = await prisma.goal.findUnique({
+      where: {
+        id: +goalId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!findData) {
+      return NextResponse.json({
+        success: false,
+        errorMessage: "해당 goal 없음",
+      });
+    }
+
+    const newWorkItem = await prisma.workItem.create({
+      data: {
+        goalId: +goalId,
+        title,
+      },
+      select: {
+        id: true,
+      },
+    });
+    if (!newWorkItem) {
+      return NextResponse.json({
+        success: false,
+        errorMessage: "newworkItem 생성 실패",
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      workItemId: newWorkItem.id,
+    });
+  } catch (error) {
+    console.log("error");
+    return NextResponse.json({
+      success: false,
+      errorMessage: "error 발생",
+    });
   }
 }

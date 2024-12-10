@@ -8,7 +8,7 @@ interface ILayout {
 export default function Layout({ children, modal }: ILayout) {
   return (
     <ItemProvider>
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <main>{children}</main>
         {modal}
       </div>

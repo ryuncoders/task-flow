@@ -9,9 +9,8 @@ export default async function GoalList() {
   const goals = await getGoalsCache();
 
   return (
-    <div>
-      <h1 className="underline font-semibold">goal list</h1>
-      <div className="flex flex-col gap-1 ">
+    <div className=" w-full">
+      <div className="grid grid-cols-3 gap-1 ">
         {goals.map((goal) => (
           <Link href={`/goal/${goal.id}`} key={goal.id}>
             <GoalComponents
