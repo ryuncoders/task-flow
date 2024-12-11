@@ -1,6 +1,11 @@
+import { getWeekDateWithWeekdays } from "@/lib/utils";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function HeaderTitle() {
+  const pathname = usePathname();
+  const weekdays = getWeekDateWithWeekdays();
+
   return (
     <header className="max-w-screen-full flex flex-col p-5 gap-10 mt-14">
       <div className="flex justify-between relative">
@@ -11,7 +16,28 @@ export default function HeaderTitle() {
           </div>
           <h1 className="text-3xl">Good morning Name</h1>
         </div>
+
         <div className="flex gap-1 absolute top-0 right-0 *:rounded-full *:py-2 *:px-4 *:text-sm">
+          {pathname === "/goal" && (
+            <Link
+              className="bg-blue-600 text-white flex gap-1 items-center"
+              href={"/goal/add"}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="size-5"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Add goal
+            </Link>
+          )}
           <span className="bg-neutral-100 flex gap-1 items-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -26,26 +52,8 @@ export default function HeaderTitle() {
                 clipRule="evenodd"
               />
             </svg>
-            18-22 Novermber
+            {weekdays[0].day + "-" + weekdays[6].day + " " + weekdays[0].month}
           </span>
-          <Link
-            className="bg-blue-600 text-white flex gap-1 items-center"
-            href={"/goal/add"}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="size-5"
-            >
-              <path
-                fillRule="evenodd"
-                d="M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Add goal
-          </Link>
         </div>
       </div>
     </header>

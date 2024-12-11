@@ -15,6 +15,7 @@ export default function TabsLayout({
   const handleOpen = () => {
     setIsOpen((prev) => !prev);
   };
+
   return (
     <div
       className={`grid  ${

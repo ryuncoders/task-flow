@@ -4,7 +4,7 @@ import { useItemContext } from "@/contexts/item-context";
 import { getWeekDateWithWeekdays } from "@/lib/utils";
 import { useParams, useRouter } from "next/navigation";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const colorPattle = [
   "#7f8c8d",
