@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
         id: true,
       },
     });
+
     if (!updateTask.id) {
       return NextResponse.json({
         success: false,

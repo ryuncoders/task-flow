@@ -1,12 +1,3 @@
-export const CompletionStatus = {
-  INCOMPLETE: "incomplete",
-  COMPLETE: "complete",
-  FAILED: "failed",
-} as const;
-
-export type CompletionStatusType =
-  (typeof CompletionStatus)[keyof typeof CompletionStatus];
-
 export interface IGoal {
   id: number;
   title: string;
@@ -17,7 +8,7 @@ export interface IGoal {
 export interface ITask {
   id: number;
   text: string; // Task 내용 (예: "1회, 2회")
-  complete: CompletionStatusType; // Task 상태 (incomplete, complete, failed)
+  complete: boolean;
   date: string; // Task 날짜 (ISO 형식 또는 "YYYY-MM-DD")
 }
 

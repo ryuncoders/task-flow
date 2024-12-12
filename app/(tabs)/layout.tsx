@@ -25,12 +25,12 @@ export default function TabsLayout({
       <div>
         <Nav />
         <HeaderTitle />
-        <button
+        {/* <button
           onClick={handleOpen}
           className="fixed top-10 right-10 bg-blue-300 p-2 rounded-xl"
         >
           button
-        </button>
+        </button> */}
         <main className="flex-1 bg-white">{children}</main>
       </div>
       <aside className={`bg-neutral-50  w-full ${isOpen ? "flex" : "hidden"}`}>

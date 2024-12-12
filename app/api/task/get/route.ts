@@ -1,7 +1,6 @@
 import { ITask } from "@/app/(tabs)/@todo/default";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session/get";
-import { endOfDay, startOfDay } from "date-fns";
 import { NextResponse } from "next/server";
 
 interface ApiResponse {
@@ -13,20 +12,35 @@ interface ApiResponse {
 export async function GET(): Promise<NextResponse> {
   try {
     const session = await getSession();
-    const today = startOfDay(new Date());
+    const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
+    const endOfToday = new Date(new Date().setHours(23, 59, 59, 999));
 
     const tasks = await prisma.task.findMany({
       where: {
+        date: {
+          gte: startOfToday,
+          lte: endOfToday,
+        },
+      },
+      include: {
         timeLine: {
-          workItem: {
-            goal: {
-              userId: +session.userId!,
+          select: {
+            workItem: {
+              select: {
+                title: true,
+                goal: {
+                  select: {
+                    title: true,
+                  },
+                },
+              },
             },
           },
         },
-        date: today,
       },
     });
+
+    console.log("task", tasks);
 
     if (!tasks) {
       return NextResponse.json<ApiResponse>({
@@ -40,6 +54,7 @@ export async function GET(): Promise<NextResponse> {
       });
     }
   } catch (error) {
+    console.log("error prisma 접속 오류");
     return NextResponse.json<ApiResponse>({
       success: false,
       error: "get tasks, api 접속 불가",

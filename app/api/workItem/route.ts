@@ -84,7 +84,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         tasks: timeLine.tasks.map((task) => ({
           ...task,
           date: task.date.toISOString(), // Date -> string으로 변환
-          isComplete: task.isComplete === "true" ? true : false, // string -> boolean 변환
+          isComplete: task.isComplete, // string -> boolean 변환
         })),
       })),
     }));

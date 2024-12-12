@@ -7,16 +7,27 @@ export interface ITask {
   id: number;
   date: Date;
   text: string;
-  isComplete: string;
+  isComplete: boolean;
   createdAt: Date;
   updateAt: Date;
   timeLineId: number;
+  timeLine: {
+    workItem: {
+      title: string;
+      goal: {
+        title: string;
+      };
+    };
+  };
 }
 
 export default function Default() {
   const [tasks, setTasks] = useState<ITask[]>([]);
-  const [updateTaskId, setUpdateTaskId] = useState(0);
-  const [isCompleteState, setIsCompleteState] = useState("incomplete");
+  const [updateTask, setUpdateTask] = useState([0, false]);
+
+  useEffect(() => {
+    console.log(tasks);
+  }, [tasks]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -25,16 +36,14 @@ export default function Default() {
         if (response.success) {
           setTasks(response.tasks);
         }
-      } catch (error) {
-        console.log("error 남");
-      }
+      } catch (error) {}
     };
     fetchTasks();
   }, []);
 
-  const taskClickHandle = (taskId: number, isComplete: string) => {
-    setUpdateTaskId(taskId);
-    setIsCompleteState(isComplete);
+  const taskClickHandle = (taskId: number, isComplete: boolean) => {
+    setUpdateTask([taskId, isComplete]);
+
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
         task.id === taskId
@@ -56,10 +65,11 @@ export default function Default() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            taskId: updateTaskId,
-            isComplete: isCompleteState,
+            taskId: updateTask[0],
+            isComplete: updateTask[1],
           }),
         });
+
         if (!response.ok) {
           throw new Error("Failed to update task");
         }
@@ -68,10 +78,10 @@ export default function Default() {
         // 실패 시 원래 상태로 복구
         setTasks((prevTasks) =>
           prevTasks.map((task) =>
-            task.id === updateTaskId
+            task.id === updateTask[0]
               ? {
                   ...task,
-                  isComplete: isCompleteState,
+                  isComplete: false,
                 }
               : task
           )
@@ -80,7 +90,7 @@ export default function Default() {
     };
 
     updateTasks();
-  }, [updateTaskId]);
+  }, [updateTask]);
 
   const today = new Date().toString().split(" ");
 
@@ -122,13 +132,21 @@ export default function Default() {
               key={task.id}
               className="flex w-full items-center justify-between py-2 px-4 rounded-3xl bg-neutral-200"
             >
-              <span>{task.text}</span>
+              <div className="flex flex-col">
+                <span>{task.text}</span>
+                <div className="items-center flex gap-1 *:text-neutral-500">
+                  <strong className="text-xs ">
+                    {task.timeLine.workItem.goal.title}
+                  </strong>
+                  <span>·</span>
+                  <span className="text-xs">
+                    {task.timeLine.workItem.title}
+                  </span>
+                </div>
+              </div>
               <div
                 onClick={() =>
-                  taskClickHandle(
-                    task.id,
-                    task.isComplete === "complete" ? "incomplete" : "complete"
-                  )
+                  taskClickHandle(task.id, task.isComplete ? false : true)
                 }
                 className="cursor-pointer  p-1"
               >
@@ -139,7 +157,7 @@ export default function Default() {
                   strokeWidth={1.5}
                   stroke="currentColor"
                   className={`size-6 rounded-full hover:text-blue-300 ${
-                    task.isComplete === "complete" ? "bg-blue-500" : "bg-white"
+                    task.isComplete ? "bg-blue-500" : "bg-white"
                   }`}
                 >
                   <path

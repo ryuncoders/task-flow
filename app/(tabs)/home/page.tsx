@@ -17,6 +17,8 @@ interface IAllWorkItem {
 export default function HomePage() {
   const [weekWorkItems, setWeekWorkItems] = useState<IAllWorkItem[]>([]);
 
+  console.log(weekWorkItems);
+
   useEffect(() => {
     const fetchWorkItem = async () => {
       try {
@@ -37,12 +39,19 @@ export default function HomePage() {
     fetchWorkItem();
   }, []);
 
+  useEffect(() => {
+    console.log(weekWorkItems);
+  }, [weekWorkItems]);
+
   const [show, setShow] = useState(false);
   const onHandleClick = () => {
     setShow((prev) => !prev);
   };
 
+  const today = new Date().toISOString().split("T")[0].split("-")[2];
   const getWeekDate = getWeekDateWithWeekdays();
+  const dayIndex = getWeekDate.findIndex((date) => date.day === today);
+
   return (
     <div className="p-5">
       <div className="grid grid-cols-[3fr_8fr]">
@@ -58,7 +67,9 @@ export default function HomePage() {
           {getWeekDate.map((date, index) => (
             <div
               key={index}
-              className="flex flex-col justify-center items-center"
+              className={`flex flex-col justify-center items-center ${
+                index === dayIndex ? "bg-neutral-400 bg-opacity-15" : ""
+              }`}
             >
               <span className="text-lg font-bold">{date.day}</span>
               <span className="text-sm font-thin text-neutral-600">
@@ -76,16 +87,25 @@ export default function HomePage() {
             <div className="h-full relative">
               {workItem.timeLines.map((timeLine) => (
                 <div
+                  key={`${workItem.id}-${timeLine.id}`}
                   className={`grid grid-cols-7 h-full ${
                     show ? "absolute top-0 left-0" : "none"
                   }  w-full `}
                 >
                   {timeLine.dateTimeLineColor!.map((color, index) => (
-                    <div
-                      key={`${workItem.id}-${timeLine.id}-${index}`}
-                      style={{ backgroundColor: color, opacity: 0.5 }}
-                      className="border h-full"
-                    />
+                    <div className="relative w-full">
+                      <div
+                        key={`${workItem.id}-${timeLine.id}-${index}`}
+                        style={{ backgroundColor: color, opacity: 0.5 }}
+                        className="border h-full absolute top-0  w-full "
+                      />
+
+                      {index === dayIndex && (
+                        <div className="flex justify-center items-center w-full absolute top-0 bg-neutral-400 bg-opacity-15 left-0">
+                          _
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               ))}

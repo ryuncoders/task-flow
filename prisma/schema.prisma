@@ -73,7 +73,7 @@ model Task {
   id         Int      @id @default(autoincrement())
   date       DateTime
   text       String
-  isComplete String   @default("incomplete")
+  isComplete Boolean  @default(false)
 
   timeLine TimeLine @relation(fields: [timeLineId], references: [id], onDelete: Cascade)
 
