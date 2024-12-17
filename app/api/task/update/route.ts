@@ -24,7 +24,6 @@ export async function POST(request: NextRequest) {
         error: "task 업데이트 실패",
       });
     } else {
-      console.log("ok");
       return NextResponse.json({
         success: true,
       });

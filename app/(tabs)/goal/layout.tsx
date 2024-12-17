@@ -7,9 +7,9 @@ interface ILayout {
 
 export default function Layout({ children, addGoalModal }: ILayout) {
   return (
-    <div>
+    <ItemProvider>
       <main>{children}</main>
       {addGoalModal}
-    </div>
+    </ItemProvider>
   );
 }

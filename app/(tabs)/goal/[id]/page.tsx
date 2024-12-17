@@ -2,9 +2,12 @@
 
 import { useItemContext } from "@/contexts/item-context";
 import { getWeekDateWithWeekdays } from "@/lib/utils";
+import { IWorkItem } from "@/types/models";
+import { WorkItem } from "@prisma/client";
 import { useParams, useRouter } from "next/navigation";
 
 import React, { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "react-query";
 
 const colorPattle = [
   "#7f8c8d",
@@ -18,57 +21,50 @@ const colorPattle = [
   "#c0392b",
 ];
 
+export async function fetchWorkItems(goalId: number) {
+  const response = await fetch(`/api/workItem/${goalId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then((res) => res.json());
+  if (response.success) {
+    return response.updatedWorkItems;
+  } else {
+    console.error("fetch workItem api 오류 발생");
+  }
+}
+
 export default function GoalPage() {
-  const { workItems, setWorkItems, gridTimeLine, setGridTimeLine } =
-    useItemContext();
-
-  const [colorSelect, setColorSelect] = useState(colorPattle[0]);
-
   const params = useParams();
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchWorkItem = async () => {
-      try {
-        const goalId = params.id;
-        const response = await fetch(`/api/workItem?goalId=${goalId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }).then((res) => res.json());
-
-        if (response.success) {
-          setWorkItems(response.updatedWorkItems);
-        } else {
-          console.log("응답 받지 못함.", response.error);
-        }
-      } catch (error) {
-        console.log(error);
-        alert("잘못된 경로 입니다. 해당하는 goal 목표가 없습니다.");
-      }
-    };
-    fetchWorkItem();
-    if (workItems.length > 0) {
-      setGridTimeLine(
-        Array.from(Array(workItems.length), () => Array(7).fill("#ffffff"))
-      );
-    }
-  }, [params.id]); // 컴포넌트 렌더링 후 한번 실행
-
-  useEffect(() => {
-    if (workItems.length > 0) {
-      setGridTimeLine(
-        Array.from(Array(workItems.length), () => Array(7).fill("#ffffff"))
-      );
-    }
-  }, [workItems]);
-
+  const { data: workItems = [], isLoading } = useQuery<IWorkItem[]>(
+    ["workItems", `goalId-${params.id}`],
+    () => fetchWorkItems(+params.id!),
+    { staleTime: 6 * 10 * 1000 }
+  );
   const weekDateWidthWeekdays = getWeekDateWithWeekdays();
-
+  const { gridTimeLine, setGridTimeLine } = useItemContext();
+  const [colorSelect, setColorSelect] = useState(colorPattle[0]);
   const [isDragging, setIsDragging] = useState(false);
   const [newTimeLineIndexAndDate, setNewTimeLineIndexAndDate] = useState([
     0, 0, 0,
   ]);
+
+  useEffect(() => {
+    if (workItems.length > 0) {
+      setGridTimeLine(
+        Array.from(Array(workItems?.length), () => Array(7).fill("#ffffff"))
+      );
+    }
+  }, [workItems]);
+
+  const [workItemTitle, setWorkItemTitle] = useState("");
+  const handleWorkItemChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setWorkItemTitle(event.target.value);
+  };
 
   const handleMouseDown = (event: any, index: number, color_index: number) => {
     event.preventDefault();
@@ -82,8 +78,6 @@ export default function GoalPage() {
       setNewTimeLineIndexAndDate((prev) => [prev[0], prev[1], color_index]);
     }
   };
-
-  const router = useRouter();
   const handleMouseUp = () => {
     setIsDragging(false);
 
@@ -100,10 +94,9 @@ export default function GoalPage() {
       )}`
     );
   };
-
   const paintDiv = (index: number, color_index: number) => {
     setGridTimeLine((prevTimeLine) => {
-      return prevTimeLine.map((timeLine, idx) => {
+      return prevTimeLine?.map((timeLine, idx) => {
         if (idx === index) {
           // 현재 index의 색상 배열만 업데이트
           const newTimeLine = timeLine.map((color, i) =>
@@ -115,12 +108,6 @@ export default function GoalPage() {
         return timeLine;
       });
     });
-  };
-
-  const [workItemTitle, setWorkItemTitle] = useState("");
-
-  const handleWorkItemChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setWorkItemTitle(event.target.value);
   };
 
   const handleWorkItemSubmit = async (event: React.FormEvent) => {
@@ -143,7 +130,11 @@ export default function GoalPage() {
           title: workItemTitle,
           timeLines: [],
         };
-        setWorkItems((prev) => [...prev, newWorkItem]);
+
+        queryClient.setQueryData<IWorkItem[]>(
+          ["workItems", `goalId-${params.id}`],
+          (oldWorkItems = []) => [...oldWorkItems, newWorkItem]
+        );
       } else {
         console.log(response.error);
       }
@@ -152,6 +143,10 @@ export default function GoalPage() {
     }
     setWorkItemTitle("");
   };
+
+  if (isLoading) {
+    return <div>is timeLine Loading ... 😊</div>;
+  }
 
   return (
     <div className="flex gap-0.5 flex-col mt-10 pl-5">
@@ -199,7 +194,7 @@ export default function GoalPage() {
           <div className="relative ">
             {/* gridTimeLine */}
 
-            {workItem.timeLines.map((timeLine, index) => (
+            {workItem.timeLines?.map((timeLine, index) => (
               <div className=" flex  absolute   top-0 left-0" key={index}>
                 {/* dateTimeLineColor가 null이면 안됨 */}
                 {timeLine.dateTimeLineColor!.map((c, color_idx) => (

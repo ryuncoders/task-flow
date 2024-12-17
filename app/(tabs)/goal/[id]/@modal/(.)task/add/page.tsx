@@ -1,29 +1,25 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  redirect,
-  useParams,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useItemContext } from "@/contexts/item-context";
 import { getTimeLineDateWeekdays, getWeeklyColors } from "@/lib/utils";
-import { IDetail, ITask, ITimeLine } from "@/types/models";
+import { IDetail, ITask, ITimeLine, IWorkItem } from "@/types/models";
+import { useQuery, useQueryClient } from "react-query";
+import { fetchWorkItems } from "../../../page";
 
 export default function AddTaskModal() {
-  const { workItems, setWorkItems, setGridTimeLine } = useItemContext();
+  const params = useParams();
   const paramsSearch = useSearchParams();
-  const paramsId = useParams().id;
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { setGridTimeLine } = useItemContext();
 
-  const closeModal = () => {
-    const re = Array.from(Array(workItems.length), () =>
-      Array(7).fill("#ffffff")
-    );
-    setGridTimeLine(re);
-    router.back(); // 모달 닫기 시 이전 URL로 이동
-  };
+  const { data: workItems, isLoading } = useQuery(
+    ["workItems", `goalId-${params.id}`],
+    () => fetchWorkItems(+params.id!),
+    { staleTime: 6 * 10 * 1000 }
+  );
 
   const paramsData = {
     title: paramsSearch.get("title"),
@@ -33,22 +29,29 @@ export default function AddTaskModal() {
     color: paramsSearch.get("color"),
   };
 
+  const [title, setTitle] = useState("");
+  const [details, setDetails] = useState<IDetail[]>([]);
+  const timeLineDateWeekdays = getTimeLineDateWeekdays(
+    +paramsData.dateStart!,
+    +paramsData.dateEnd!
+  );
+  const initialDetails = timeLineDateWeekdays.map((item) => {
+    return { ...item, text: "" };
+  });
+
+  const closeModal = () => {
+    const re = Array.from(Array(workItems.length), () =>
+      Array(7).fill("#ffffff")
+    );
+    setGridTimeLine(re);
+    router.back(); // 모달 닫기 시 이전 URL로 이동
+  };
+
   if (!paramsData) {
     console.log("params에 값이 존재하지 않음.");
     alert("잘못된 형태입니다. 다시 시도해주세요.");
     router.back();
   }
-  const timeLineDateWeekdays = getTimeLineDateWeekdays(
-    +paramsData.dateStart!,
-    +paramsData.dateEnd!
-  );
-
-  const [title, setTitle] = useState("");
-  const [details, setDetails] = useState<IDetail[]>([]);
-
-  const initialDetails = timeLineDateWeekdays.map((item) => {
-    return { ...item, text: "" };
-  });
 
   useEffect(() => {
     setDetails(initialDetails);
@@ -57,13 +60,11 @@ export default function AddTaskModal() {
   const changeTitle = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(event.target.value);
   };
-
   const changeDetail = (index: number, text: string) => {
     setDetails((prev) =>
       prev.map((detail, idx) => (idx === index ? { ...detail, text } : detail))
     );
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const workItemId = workItems[+paramsData.workItemIndex!].id;
@@ -95,7 +96,7 @@ export default function AddTaskModal() {
         const newTasks: ITask[] = details.map((detail, index) => ({
           id: index,
           text: detail.text,
-          complete: "incomplete",
+          complete: false,
           date: `${detail.year}-${detail.month}-${detail.day}`,
         }));
         const newTimeLine: ITimeLine = {
@@ -110,18 +111,22 @@ export default function AddTaskModal() {
             color: paramsData.color ? `#${paramsData.color}` : "#000000", // 기본 색상
           }),
         };
-        setWorkItems((prevWorkItems) =>
-          prevWorkItems.map((workItem, index) =>
-            index === Number(paramsData.workItemIndex)
-              ? {
-                  ...workItem,
-                  timeLines: [...workItem.timeLines, newTimeLine],
-                }
-              : workItem
-          )
+        queryClient.setQueryData<IWorkItem[]>(
+          ["workItems", `goalId-${params.id}`], // 쿼리 키 설정
+          (
+            oldWorkItems = [] // 기존 데이터가 없으면 빈 배열로 설정
+          ) =>
+            oldWorkItems.map((workItem, index) =>
+              index === Number(paramsData.workItemIndex) // 조건에 맞는 아이템 찾기
+                ? {
+                    ...workItem,
+                    timeLines: [...workItem.timeLines, newTimeLine],
+                  } // 타임라인 추가
+                : workItem
+            )
         );
 
-        router.back();
+        closeModal();
       } else {
         console.log("응답 받지 못함", result.error);
       }
@@ -129,6 +134,10 @@ export default function AddTaskModal() {
       console.log("응답 보내기 오류");
     }
   };
+
+  if (isLoading) {
+    return <div>task is Loading ...</div>;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

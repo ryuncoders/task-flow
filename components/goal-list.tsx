@@ -1,17 +1,35 @@
-import { getGoal } from "@/app/api/data";
-import GoalComponents from "./goal-components";
+"use client";
+
 import Link from "next/link";
-import { unstable_cache as nextCache } from "next/cache";
+import { useQuery } from "react-query";
+import GoalComponents from "./goal-components";
 
-const getGoalsCache = nextCache(getGoal, ["goal-list"], { tags: ["goals"] });
+async function fetchGoals() {
+  const response = await fetch("/api/goal", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch goals");
+  }
 
-export default async function GoalList() {
-  const goals = await getGoalsCache();
+  const data = await response.json();
+  return data.goals;
+}
+
+export default function GoalList() {
+  const { data: goals, isLoading } = useQuery(["goals"], fetchGoals);
+
+  if (isLoading) {
+    return <div>goals</div>;
+  }
 
   return (
     <div className=" w-full">
       <div className="grid grid-cols-3 gap-1 ">
-        {goals.map((goal) => (
+        {goals.map((goal: any) => (
           <Link href={`/goal/${goal.id}`} key={goal.id}>
             <GoalComponents
               title={goal.title}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "react-query";
 
 export interface ITask {
   id: number;
@@ -21,39 +22,41 @@ export interface ITask {
   };
 }
 
+async function fetchTodayTask() {
+  const response = await fetch("/api/task/get").then((res) => res.json());
+  if (response.success) {
+    const newSortedTasks = [...response.tasks].sort((a, b) => {
+      if (a.isComplete === b.isComplete) return 0;
+      return a.isComplete ? 1 : -1;
+    });
+    return newSortedTasks;
+  } else {
+    console.error("fetch error: get today task");
+  }
+}
+
 export default function Default() {
-  const [tasks, setTasks] = useState<ITask[]>([]);
+  const queryClient = useQueryClient();
+  const { data: tasks, isLoading } = useQuery(["todayTask"], fetchTodayTask, {
+    staleTime: 6 * 10 * 1000,
+  });
+
   const [updateTask, setUpdateTask] = useState([0, false]);
-
-  useEffect(() => {
-    console.log(tasks);
-  }, [tasks]);
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await fetch("/api/task/get").then((res) => res.json());
-        if (response.success) {
-          setTasks(response.tasks);
-        }
-      } catch (error) {}
-    };
-    fetchTasks();
-  }, []);
-
   const taskClickHandle = (taskId: number, isComplete: boolean) => {
     setUpdateTask([taskId, isComplete]);
 
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              isComplete,
-            }
-          : task
-      )
-    );
+    queryClient.setQueryData(["todayTask"], (oldData: ITask[] | undefined) => {
+      if (!oldData) return [];
+
+      const updatedTasks = oldData.map((task) =>
+        task.id === taskId ? { ...task, isComplete } : task
+      );
+
+      return updatedTasks.sort((a, b) => {
+        if (a.isComplete === b.isComplete) return 0;
+        return a.isComplete ? 1 : -1;
+      });
+    });
   };
 
   useEffect(() => {
@@ -76,15 +79,15 @@ export default function Default() {
       } catch (error) {
         console.error("Error: updating task", error);
         // 실패 시 원래 상태로 복구
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === updateTask[0]
-              ? {
-                  ...task,
-                  isComplete: false,
-                }
-              : task
-          )
+
+        queryClient.setQueryData(
+          ["todayTask"],
+          (oldData: ITask[] | undefined) => {
+            if (!oldData) return [];
+            return oldData.map((task) =>
+              task.id === updateTask[0] ? { ...task, isComplete: false } : task
+            );
+          }
         );
       }
     };
@@ -93,6 +96,10 @@ export default function Default() {
   }, [updateTask]);
 
   const today = new Date().toString().split(" ");
+
+  if (isLoading) {
+    return <div>today task is Loading ...</div>;
+  }
 
   return (
     <div className="p-4 grid grid-rows-[1fr_0.5fr_5fr_3fr] w-full">
@@ -127,14 +134,16 @@ export default function Default() {
       </div>
       <Suspense>
         <ul className="space-y-2 mt-2 w-full">
-          {tasks.map((task) => (
+          {tasks?.map((task) => (
             <li
               key={task.id}
               className="flex w-full items-center justify-between py-2 px-4 rounded-3xl bg-neutral-200"
             >
               <div className="flex flex-col">
-                <span>{task.text}</span>
-                <div className="items-center flex gap-1 *:text-neutral-500">
+                <span className={`${task.isComplete ? "line-through" : ""}`}>
+                  {task.text}
+                </span>
+                <div className="items-center flex gap-1 *:text-neutral-500 ">
                   <strong className="text-xs ">
                     {task.timeLine.workItem.goal.title}
                   </strong>

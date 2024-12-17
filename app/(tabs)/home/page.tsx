@@ -2,8 +2,9 @@
 
 import { getWeekDateWithWeekdays } from "@/lib/utils";
 import { ITimeLine } from "@/types/models";
-import { endOfWeek, startOfWeek } from "date-fns";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "react-query";
+import { fetchWeekWorkItems } from "./actions";
 
 interface IAllWorkItem {
   id: number;
@@ -15,34 +16,13 @@ interface IAllWorkItem {
 }
 
 export default function HomePage() {
-  const [weekWorkItems, setWeekWorkItems] = useState<IAllWorkItem[]>([]);
-
-  console.log(weekWorkItems);
-
-  useEffect(() => {
-    const fetchWorkItem = async () => {
-      try {
-        const data = await fetch("/api/workItem/week", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }).then((res) => res.json());
-        if (data.success) {
-          console.log(data);
-          setWeekWorkItems(data.weekWorkItems);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchWorkItem();
-  }, []);
-
-  useEffect(() => {
-    console.log(weekWorkItems);
-  }, [weekWorkItems]);
-
+  const { data: weekWorkItems, isLoading } = useQuery<IAllWorkItem[]>(
+    ["test-data"],
+    fetchWeekWorkItems,
+    {
+      staleTime: 6 * 10 * 1000,
+    }
+  );
   const [show, setShow] = useState(false);
   const onHandleClick = () => {
     setShow((prev) => !prev);
@@ -51,6 +31,14 @@ export default function HomePage() {
   const today = new Date().toISOString().split("T")[0].split("-")[2];
   const getWeekDate = getWeekDateWithWeekdays();
   const dayIndex = getWeekDate.findIndex((date) => date.day === today);
+
+  if (isLoading) {
+    return <div> timeLine is Loading...</div>;
+  }
+
+  if (!weekWorkItems || weekWorkItems.length === 0) {
+    return <div>No data available</div>;
+  }
 
   return (
     <div className="p-5">
@@ -80,7 +68,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {weekWorkItems.map((workItem) => (
+      {weekWorkItems?.map((workItem) => (
         <div key={workItem.id} className="grid grid-cols-[3fr_8fr] h-full">
           <span>{workItem.title}</span>
           <div className=" relative w-full">
@@ -88,22 +76,22 @@ export default function HomePage() {
               {workItem.timeLines.map((timeLine) => (
                 <div
                   key={`${workItem.id}-${timeLine.id}`}
-                  className={`grid grid-cols-7 h-full ${
-                    show ? "absolute top-0 left-0" : "none"
-                  }  w-full `}
+                  className={`grid grid-cols-7 ${
+                    show ? "absolute top-0 left-0 " : ""
+                  }  w-full h-[24px]`}
                 >
                   {timeLine.dateTimeLineColor!.map((color, index) => (
-                    <div className="relative w-full">
+                    <div
+                      className="relative w-full"
+                      key={`${workItem.id}-${timeLine.id}-${index}`}
+                    >
                       <div
-                        key={`${workItem.id}-${timeLine.id}-${index}`}
                         style={{ backgroundColor: color, opacity: 0.5 }}
                         className="border h-full absolute top-0  w-full "
                       />
 
                       {index === dayIndex && (
-                        <div className="flex justify-center items-center w-full absolute top-0 bg-neutral-400 bg-opacity-15 left-0">
-                          _
-                        </div>
+                        <div className="flex justify-center items-center w-full h-[24px] absolute top-0 bg-neutral-400 bg-opacity-15 left-0"></div>
                       )}
                     </div>
                   ))}
