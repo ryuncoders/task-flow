@@ -26,6 +26,37 @@ interface ReturnWorkItem {
   }>;
 }
 
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
+  try {
+    await prisma.workItem.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+    return NextResponse.json(
+      {
+        success: true,
+        message: "WorkItem deleted successfully",
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting WorkItem", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to delete worItem",
+        details: error,
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET(request: NextRequest) {
   const goalIdParam = request.nextUrl.pathname.split("/").pop();
 
@@ -100,8 +131,6 @@ export async function GET(request: NextRequest) {
         })),
       })),
     }));
-
-    console.log("api workItems", updatedWorkItems);
 
     return NextResponse.json({
       success: true,

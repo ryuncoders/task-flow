@@ -6,7 +6,8 @@ import { IWorkItem } from "@/types/models";
 import { WorkItem } from "@prisma/client";
 import { useParams, useRouter } from "next/navigation";
 
-import React, { useEffect, useState } from "react";
+import React, { EventHandler, useEffect, useState } from "react";
+import { OnClickFunc } from "react-calendar";
 import { useQuery, useQueryClient } from "react-query";
 
 const colorPattle = [
@@ -64,6 +65,12 @@ export default function GoalPage() {
   const [workItemTitle, setWorkItemTitle] = useState("");
   const handleWorkItemChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setWorkItemTitle(event.target.value);
+  };
+
+  const [editItem, setEditItem] = useState(false);
+
+  const onEditHandle = () => {
+    setEditItem((prev) => !prev);
   };
 
   const handleMouseDown = (event: any, index: number, color_index: number) => {
@@ -144,13 +151,79 @@ export default function GoalPage() {
     setWorkItemTitle("");
   };
 
+  const timeLineDeleteHandle = async (
+    workItemId: number,
+    timeLineId: number
+  ) => {
+    // 낙관적 업데이트
+    queryClient.setQueryData<IWorkItem[]>(
+      ["workItems", `goalId-${params.id}`],
+      (prevWorkItems = []) =>
+        prevWorkItems?.map((workItem) => {
+          if (workItem.id === workItemId) {
+            return {
+              ...workItem,
+              timeLines: workItem.timeLines.filter(
+                (timeLine) => timeLine.id !== timeLineId
+              ),
+            };
+          }
+          return workItem;
+        })
+    );
+
+    try {
+      const response = await fetch(`/api/timeLine/${timeLineId}`, {
+        method: "DELETE",
+      }).then((res) => res.json());
+
+      if (!response.success) {
+        throw new Error("Failed to delete timeLine");
+      }
+      console.log("Deleted successfully");
+    } catch (error) {
+      console.error("Error deleting timeLine:", error);
+
+      // 실패 시 이전 상태 복구 (낙관적 업데이트 복구구)
+      queryClient.invalidateQueries(["workItems", `goalId-${params.id}`]);
+    }
+  };
+
+  const workItemDeleteHandle = async (workItemId: number) => {
+    queryClient.setQueryData<IWorkItem[]>(
+      ["workItems", `goalId-${params.id}`],
+      (prevWorkItems = []) =>
+        prevWorkItems?.filter((workItem) => workItem.id !== workItemId)
+    );
+
+    try {
+      const response = await fetch(`/api/workItem/${workItemId}`, {
+        method: "DELETE",
+      }).then((res) => res.json());
+
+      if (!response.success) {
+        throw new Error("Failed to delete workItem");
+      }
+      console.log("success workItem");
+    } catch (error) {
+      console.error("Error deleting WorkItem:", error);
+
+      // 실패 시 이전 상태 복구 (낙관적 업데이트 복구구)
+      queryClient.invalidateQueries(["workItems", `goalId-${params.id}`]);
+    }
+  };
+
   if (isLoading) {
-    return <div>is timeLine Loading ... 😊</div>;
+    return (
+      <div className="w-full h-full flex justify-center items-center">
+        <p>timeLine Loading ... 😊</p>
+      </div>
+    );
   }
 
   return (
-    <div className="flex gap-0.5 flex-col mt-10 pl-5">
-      <div>
+    <div className="flex gap-0.5 flex-col mt-10 pl-5 px-6">
+      <div className="flex justify-between p-5">
         <form onSubmit={handleWorkItemSubmit}>
           <input
             onChange={handleWorkItemChange}
@@ -165,6 +238,12 @@ export default function GoalPage() {
             submit
           </button>
         </form>
+        <button
+          className="bg-neutral-400 rounded-3xl px-2 py-1"
+          onClick={onEditHandle}
+        >
+          EDIT
+        </button>
       </div>
       <div className="flex gap-1">
         {colorPattle.map((color) => (
@@ -176,11 +255,15 @@ export default function GoalPage() {
           />
         ))}
       </div>
-      <div className="grid grid-cols-[2fr_7fr]">
+      <div
+        className={`grid ${
+          editItem ? "grid-cols-[2fr_7fr_15px]" : "grid-cols-[2fr_7fr]"
+        }  w-full`}
+      >
         <div className="" />
-        <div className="flex  ">
+        <div className="flex  w-full">
           {weekDateWidthWeekdays.map((date, index) => (
-            <div className="w-20 flex flex-col text-center " key={index}>
+            <div className="w-full flex flex-col text-center " key={index}>
               <span className="font-bold">{date.day}</span>
               <span className="text-xs">{date.weekdays}</span>
             </div>
@@ -189,44 +272,112 @@ export default function GoalPage() {
       </div>
 
       {workItems.map((workItem, workItem_index) => (
-        <div key={workItem.id} className="grid grid-cols-[2fr_7fr] relative">
-          <h1 className="h-[40px]  ">{workItem.title}</h1>
-          <div className="relative ">
+        <div
+          key={workItem.id}
+          className="grid grid-cols-[2fr_7fr] relative w-full"
+        >
+          <div className="flex justify-between items-center h-full group">
+            <h1 className="h-[40px] text-sm flex items-center">
+              {workItem.title}
+            </h1>
+            <button
+              onClick={() => workItemDeleteHandle(workItem.id)}
+              className="text-white  group-hover:text-red-500 transition-all duration-300"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="size-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18 18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div className="relative w-full">
             {/* gridTimeLine */}
 
             {workItem.timeLines?.map((timeLine, index) => (
-              <div className=" flex  absolute   top-0 left-0" key={index}>
-                {/* dateTimeLineColor가 null이면 안됨 */}
-                {timeLine.dateTimeLineColor!.map((c, color_idx) => (
-                  <div
-                    key={color_idx}
-                    className="h-[40px] w-20 border border-black"
-                    style={{
-                      backgroundColor: c,
-                      opacity: 0.5,
-                    }}
-                  />
-                ))}
+              <div
+                key={`${timeLine.id}`}
+                className={`${
+                  editItem ? "grid grid-cols-[7fr_15px] gap-1" : ""
+                }`}
+              >
+                <div
+                  className={`flex w-full  ${
+                    editItem ? "" : "absolute top-0 left-0"
+                  }`}
+                  key={index}
+                >
+                  {/* dateTimeLineColor가 null이면 안됨 */}
+                  {timeLine.dateTimeLineColor!.map((c, color_idx) => (
+                    <div
+                      key={color_idx}
+                      className="h-[40px] w-full border border-black"
+                      style={{
+                        backgroundColor: c,
+                        opacity: 0.5,
+                      }}
+                    />
+                  ))}
+                </div>
+                {editItem && (
+                  <button
+                    className="flex justify-center items-center"
+                    onClick={() =>
+                      timeLineDeleteHandle(workItem.id, timeLine.id)
+                    }
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
             ))}
-
-            <div className="absoulte flex top-0 left-0">
-              {gridTimeLine?.[workItem_index]?.map((color, index) => (
-                <div className="border border-black h-[40px] w-20 " key={index}>
+            {!editItem && (
+              <div className="absoulte flex top-0 left-0 ">
+                {gridTimeLine?.[workItem_index]?.map((color, index) => (
                   <div
-                    className="opacity-50 w-[100%] h-[100%] z-10"
-                    style={{
-                      backgroundColor: color,
-                    }}
-                    onMouseUp={() => handleMouseUp()}
-                    onMouseDown={(e) =>
-                      handleMouseDown(e, workItem_index, index)
-                    }
-                    onMouseEnter={() => handleMouseEnter(workItem_index, index)}
-                  />
-                </div>
-              ))}
-            </div>
+                    className="border border-black h-[40px] w-full "
+                    key={index}
+                  >
+                    <div
+                      className="opacity-50 w-[100%] h-[100%] z-10 "
+                      style={{
+                        backgroundColor: color,
+                      }}
+                      onMouseUp={() => handleMouseUp()}
+                      onMouseDown={(e) =>
+                        handleMouseDown(e, workItem_index, index)
+                      }
+                      onMouseEnter={() =>
+                        handleMouseEnter(workItem_index, index)
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ))}
